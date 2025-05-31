@@ -2,7 +2,7 @@
 
 A remote Model Context Protocol (MCP) server built with FastMCP TypeScript framework, providing Neo4j knowledge graph memory capabilities with OAuth 2.1 authentication.
 
-[![Docker Image](https://img.shields.io/docker/v/YOUR_USERNAME/neo4j-fastmcp-server?label=Docker%20Hub)](https://hub.docker.com/r/YOUR_USERNAME/neo4j-fastmcp-server)
+[![Docker Image](https://img.shields.io/docker/v/arturrenzenbrink/neo4j-fastmcp-server?label=Docker%20Hub)](https://hub.docker.com/r/arturrenzenbrink/neo4j-fastmcp-server)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## Features
@@ -36,9 +36,9 @@ Edit `.env` with your configuration:
 
 ```env
 # Neo4j Configuration
-NEO4J_URI=bolt://macmini.arturs-server.com:7687
+NEO4J_URI=bolt://localhost:7687
 NEO4J_USERNAME=neo4j
-NEO4J_PASSWORD=nohuprsz
+NEO4J_PASSWORD=your-password
 NEO4J_DATABASE=neo4j
 
 # OAuth Configuration
@@ -49,6 +49,26 @@ OAUTH_REDIRECT_URI=http://localhost:8080/auth/callback
 ```
 
 ### 2. Docker Deployment
+
+**Using the pre-built image:**
+
+```bash
+# Pull and run the image
+docker pull arturrenzenbrink/neo4j-fastmcp-server:latest
+
+docker run -d \
+  --name neo4j-mcp-server \
+  -p 8080:8080 \
+  -e NEO4J_URI="bolt://your-neo4j:7687" \
+  -e NEO4J_USERNAME="neo4j" \
+  -e NEO4J_PASSWORD="your-password" \
+  -e JWT_SECRET="your-jwt-secret" \
+  -e OAUTH_CLIENT_ID="your-client-id" \
+  -e OAUTH_CLIENT_SECRET="your-client-secret" \
+  arturrenzenbrink/neo4j-fastmcp-server:latest
+```
+
+**Using Docker Compose:**
 
 ```bash
 # Build and start the services
@@ -170,6 +190,23 @@ const transport = new StreamableHTTPClientTransport(
 }
 ```
 
+## Testing
+
+For comprehensive testing instructions, see the included guides:
+
+- `COMPLETE_TESTING_GUIDE.md` - Complete testing options
+- `DOCKER_MCP_INSPECTOR_GUIDE.md` - MCP Inspector testing
+
+### Quick Test
+
+```bash
+# Test with no-auth server (easiest)
+npx tsx src/test-direct.ts
+
+# In another terminal
+npx @modelcontextprotocol/inspector http://localhost:8081/stream
+```
+
 ## Architecture
 
 ```
@@ -197,7 +234,7 @@ const transport = new StreamableHTTPClientTransport(
 ### Environment Variables
 
 | Variable | Description | Required | Default |
-|----------|-------------|----------|---------||
+|----------|-------------|----------|---------|
 | `NEO4J_URI` | Neo4j connection URI | ✅ | - |
 | `NEO4J_USERNAME` | Neo4j username | ✅ | - |
 | `NEO4J_PASSWORD` | Neo4j password | ✅ | - |
