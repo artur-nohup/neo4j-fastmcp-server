@@ -4,67 +4,84 @@ services:
   neo4j-mcp-server:
     build: .
     container_name: neo4j-mcp-server
-    restart: unless-stopped
     ports:
       - "8080:8080"
     environment:
-      # Neo4j Configuration
-      - NEO4J_URI=bolt://macmini.arturs-server.com:7687
-      - NEO4J_USERNAME=neo4j
-      - NEO4J_PASSWORD=nohuprsz
-      - NEO4J_DATABASE=neo4j
+      # Neo4j Configuration (REQUIRED)
+      - NEO4J_URI=${NEO4J_URI:-bolt://localhost:7687}
+      - NEO4J_USERNAME=${NEO4J_USERNAME:-neo4j}
+      - NEO4J_PASSWORD=${NEO4J_PASSWORD}
+      - NEO4J_DATABASE=${NEO4J_DATABASE:-neo4j}
       
-      # Server Configuration
-      - SERVER_PORT=8080
-      - SERVER_HOST=0.0.0.0
+      # OAuth Configuration (REQUIRED)
+      - JWT_SECRET=${JWT_SECRET}
+      - OAUTH_CLIENT_ID=${OAUTH_CLIENT_ID}
+      - OAUTH_CLIENT_SECRET=${OAUTH_CLIENT_SECRET}
+      - OAUTH_REDIRECT_URI=${OAUTH_REDIRECT_URI:-http://localhost:8080/auth/callback}
       
-      # OAuth Configuration (customize these for production)
-      - JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
-      - OAUTH_CLIENT_ID=your-oauth-client-id
-      - OAUTH_CLIENT_SECRET=your-oauth-client-secret
-      - OAUTH_REDIRECT_URI=http://localhost:8080/auth/callback
-      
-      # MCP Server Configuration
-      - MCP_SERVER_NAME=neo4j-memory-mcp
-      - MCP_SERVER_VERSION=1.0.0
-      
-      # Node.js Configuration
-      - NODE_ENV=production
+      # MCP Server Configuration (OPTIONAL)
+      - MCP_SERVER_NAME=${MCP_SERVER_NAME:-neo4j-memory-mcp}
+      - MCP_SERVER_VERSION=${MCP_SERVER_VERSION:-1.0.0}
+      - PORT=${PORT:-8080}
+      - NODE_ENV=${NODE_ENV:-production}
     
-    volumes:
-      # Optional: Mount logs directory
-      - ./logs:/app/logs
+    depends_on:
+      - neo4j
+    
+    restart: unless-stopped
     
     networks:
-      - mcp-network
+      - neo4j-mcp-network
+    
+    volumes:
+      - ./logs:/app/logs
     
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:8080/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 40s
+      start_period: 10s
 
-  # Optional: Add a reverse proxy for HTTPS and load balancing
+  # Optional: Include Neo4j if not running externally
+  neo4j:
+    image: neo4j:5.15-community
+    container_name: neo4j-db
+    ports:
+      - "7474:7474"  # HTTP
+      - "7687:7687"  # Bolt
+    environment:
+      - NEO4J_AUTH=${NEO4J_USERNAME:-neo4j}/${NEO4J_PASSWORD}
+      - NEO4J_PLUGINS=["apoc"]
+      - NEO4J_dbms_security_procedures_unrestricted=apoc.*
+      - NEO4J_dbms_security_procedures_allowlist=apoc.*
+    volumes:
+      - neo4j_data:/data
+      - neo4j_logs:/logs
+    networks:
+      - neo4j-mcp-network
+    restart: unless-stopped
+
+  # Optional: Nginx reverse proxy with SSL
   nginx:
     image: nginx:alpine
-    container_name: neo4j-mcp-proxy
-    restart: unless-stopped
+    container_name: neo4j-mcp-nginx
     ports:
       - "80:80"
       - "443:443"
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./ssl:/etc/nginx/ssl:ro  # Mount SSL certificates if using HTTPS
+      - ./ssl:/etc/nginx/ssl:ro
     depends_on:
       - neo4j-mcp-server
     networks:
-      - mcp-network
-
-networks:
-  mcp-network:
-    driver: bridge
+      - neo4j-mcp-network
+    restart: unless-stopped
 
 volumes:
-  mcp-logs:
-    driver: local
+  neo4j_data:
+  neo4j_logs:
+
+networks:
+  neo4j-mcp-network:
+    driver: bridge
