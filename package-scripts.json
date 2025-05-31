@@ -1,0 +1,12 @@
+{
+  "scripts": {
+    "test:connection": "npx tsx src/test-connection.ts",
+    "test:client": "npx tsx src/test-client.ts",
+    "test:full": "npm run test:connection && npm run build && npm run test:client",
+    "docker:build": "docker build -t neo4j-mcp-server .",
+    "docker:run": "docker-compose up -d",
+    "docker:stop": "docker-compose down",
+    "docker:logs": "docker-compose logs -f neo4j-mcp-server",
+    "docker:test": "npm run docker:build && npm run docker:run && sleep 10 && npm run test:client && npm run docker:stop"
+  }
+}

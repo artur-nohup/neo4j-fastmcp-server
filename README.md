@@ -2,7 +2,7 @@
 
 A remote Model Context Protocol (MCP) server built with FastMCP TypeScript framework, providing Neo4j knowledge graph memory capabilities with OAuth 2.1 authentication.
 
-[![Docker Image](https://img.shields.io/docker/v/arturnohup/neo4j-fastmcp-server?label=Docker%20Hub)](https://hub.docker.com/r/arturnohup/neo4j-fastmcp-server)
+[![Docker Image](https://img.shields.io/docker/v/YOUR_USERNAME/neo4j-fastmcp-server?label=Docker%20Hub)](https://hub.docker.com/r/YOUR_USERNAME/neo4j-fastmcp-server)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## Features
@@ -197,7 +197,7 @@ const transport = new StreamableHTTPClientTransport(
 ### Environment Variables
 
 | Variable | Description | Required | Default |
-|----------|-------------|----------|---------|  
+|----------|-------------|----------|---------||
 | `NEO4J_URI` | Neo4j connection URI | ✅ | - |
 | `NEO4J_USERNAME` | Neo4j username | ✅ | - |
 | `NEO4J_PASSWORD` | Neo4j password | ✅ | - |
