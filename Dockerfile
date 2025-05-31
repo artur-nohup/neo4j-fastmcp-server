@@ -1,23 +1,15 @@
-# Use official Node.js LTS image
-FROM node:20-alpine
+# Multi-stage build for Neo4j FastMCP Server
+FROM node:20-alpine AS builder
 
 # Set working directory
 WORKDIR /app
-
-# Install system dependencies
-RUN apk add --no-cache \
-    git \
-    python3 \
-    make \
-    g++ \
-    && rm -rf /var/cache/apk/*
 
 # Copy package files
 COPY package*.json ./
 COPY tsconfig.json ./
 
-# Install all dependencies (including dev for building)
-RUN npm ci
+# Install dependencies
+RUN npm ci --only=production
 
 # Copy source code
 COPY src/ ./src/
@@ -25,23 +17,44 @@ COPY src/ ./src/
 # Build the application
 RUN npm run build
 
-# Remove dev dependencies after building
-RUN npm prune --production
+# Production stage
+FROM node:20-alpine AS production
 
-# Create non-root user for security
-RUN addgroup -g 1001 -S nodejs && \
+# Create non-root user
+RUN addgroup -g 1001 -S nextjs && \
     adduser -S nextjs -u 1001
 
-# Change ownership of the app directory
-RUN chown -R nextjs:nodejs /app
+# Set working directory
+WORKDIR /app
+
+# Copy built application and node_modules from builder
+COPY --from=builder --chown=nextjs:nextjs /app/dist ./dist
+COPY --from=builder --chown=nextjs:nextjs /app/node_modules ./node_modules
+COPY --from=builder --chown=nextjs:nextjs /app/package*.json ./
+
+# Copy docker-specific files
+COPY --chown=nextjs:nextjs docker-compose.yml ./
+
+# Create health check script
+RUN echo '#!/bin/sh\nwget --quiet --tries=1 --spider http://localhost:8080/health || exit 1' > /app/healthcheck.sh && \
+    chmod +x /app/healthcheck.sh && \
+    chown nextjs:nextjs /app/healthcheck.sh
+
+# Switch to non-root user
 USER nextjs
 
-# Expose the port
+# Expose port
 EXPOSE 8080
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD node -e "require('http').get('http://localhost:8080/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })" || exit 1
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+  CMD /app/healthcheck.sh
+
+# Set environment variables with defaults
+ENV NODE_ENV=production
+ENV PORT=8080
+ENV MCP_SERVER_NAME=neo4j-memory-mcp
+ENV MCP_SERVER_VERSION=1.0.0
 
 # Start the application
 CMD ["node", "dist/index.js"]
