@@ -14,7 +14,6 @@ A production-ready remote Model Context Protocol (MCP) server with enterprise-gr
 - **📊 Session Management**: Automatic token refresh and session validation
 - **🐳 Production Ready**: Docker support with health checks and monitoring
 - **⚡ FastMCP Framework**: Built on the latest FastMCP TypeScript framework
-- **🔄 Dual Authentication**: Seamlessly supports both OAuth and API key authentication
 
 ## 🎯 Perfect for Claude.ai Integration
 
@@ -28,20 +27,16 @@ This server is specifically designed to work with Claude.ai's custom integration
 
 ## 🚀 Quick Start
 
-### 1. Descope Setup (Required)
-
-1. Create account at [Descope Console](https://app.descope.com)
-2. Create a new project for your MCP server
-3. Configure OAuth providers (Google, GitHub, etc.)
-4. Copy your Project ID and Management Key
-
-### 2. Environment Configuration
+### 1. Clone and Setup
 
 ```bash
 git clone https://github.com/artur-nohup/neo4j-fastmcp-server.git
 cd neo4j-fastmcp-server
+npm install
 cp .env.example .env
 ```
+
+### 2. Configure Environment
 
 Edit `.env` with your configuration:
 
@@ -64,14 +59,14 @@ OAUTH_REDIRECT_URI=http://localhost:8081/oauth/callback
 SESSION_SECRET=your-secure-session-secret
 ```
 
-### 3. Installation & Testing
+### 3. Start Development Server
 
 ```bash
-# Install dependencies
-npm install
-
 # Start development server
 npm run dev
+
+# Or run tests
+npm run test
 
 # The server starts on:
 # - MCP Server: http://localhost:8081/stream
@@ -84,26 +79,13 @@ npm run dev
 2. Click **Add Integration**
 3. Enter MCP Server URL: `http://localhost:8081/stream`
 4. Complete the OAuth flow when prompted
-5. Grant permissions to Claude
-6. Start using your Neo4j knowledge graph in Claude!
+5. Start using your Neo4j knowledge graph in Claude!
 
 ## 🔐 Authentication Methods
 
 ### OAuth 2.1 Flow (for Claude.ai)
 
-Perfect for interactive clients like Claude.ai:
-
-```
-1. Authorization Request → OAuth Provider Login
-2. Authorization Code → Token Exchange  
-3. Access Token → MCP API Access
-4. Refresh Token → Automatic Token Renewal
-```
-
-**Endpoints**:
-- Authorization: `http://localhost:8082/oauth/authorize`
-- Token Exchange: `http://localhost:8082/oauth/token`
-- User Info: `http://localhost:8082/oauth/userinfo`
+Perfect for interactive clients like Claude.ai with full PKCE support.
 
 ### API Key Authentication
 
@@ -121,28 +103,26 @@ curl -X POST http://localhost:8081/stream \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
 ```
 
-## 🎛️ Available Tools & Scopes
+## 🎛️ Available Tools
 
-### MCP Tools (10 total)
+### 10 MCP Tools with Permission-based Access
 
-1. **create_entities** - Create knowledge graph entities (requires `mcp:write`)
-2. **create_relations** - Create relationships between entities (requires `mcp:write`)
-3. **add_observations** - Add observations to entities (requires `mcp:write`)
-4. **delete_entities** - Remove entities and relations (requires `mcp:write`)
-5. **delete_observations** - Remove specific observations (requires `mcp:write`)
-6. **delete_relations** - Remove relationships (requires `mcp:write`)
-7. **read_graph** - Read entire knowledge graph (requires `mcp:read`)
-8. **search_nodes** - Full-text search across the graph (requires `mcp:read`)
-9. **find_nodes** - Find specific entities by name (requires `mcp:read`)
-10. **health_check** - Server and Neo4j health status (requires `mcp:admin`)
+1. **create_entities** - Create knowledge graph entities
+2. **create_relations** - Create relationships between entities
+3. **add_observations** - Add observations to entities
+4. **delete_entities** - Remove entities and relations
+5. **delete_observations** - Remove specific observations
+6. **delete_relations** - Remove relationships
+7. **read_graph** - Read entire knowledge graph
+8. **search_nodes** - Full-text search across the graph
+9. **find_nodes** - Find specific entities by name
+10. **health_check** - Server and Neo4j health status
 
 ### Permission Scopes
 
 - `mcp:read` - Read operations and graph queries
 - `mcp:write` - Create, update, and delete operations  
 - `mcp:admin` - Administrative operations and health checks
-- `mcp:tools:list` - List available tools
-- `mcp:tools:call` - Execute MCP tools
 
 ## 🧪 Testing & Development
 
@@ -152,7 +132,7 @@ curl -X POST http://localhost:8081/stream \
 # Start test server
 npm run test
 
-# In another terminal
+# In another terminal, start MCP Inspector
 npx @modelcontextprotocol/inspector
 
 # Configure connection:
@@ -163,13 +143,13 @@ npx @modelcontextprotocol/inspector
 ### cURL Testing
 
 ```bash
-# OAuth flow test
+# Test with OAuth token
 curl -X POST http://localhost:8081/stream \
   -H "Authorization: Bearer <oauth-token>" \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
 
-# API key test  
+# Test with API key  
 curl -X POST http://localhost:8081/stream \
   -H "X-API-Key: <api-key>" \
   -H "Content-Type: application/json" \
@@ -184,7 +164,7 @@ curl -X POST http://localhost:8081/stream \
 docker pull arturrenzenbrink/neo4j-fastmcp-server:latest
 
 docker run -d \
-  --name neo4j-mcp-descope \
+  --name neo4j-mcp-server \
   -p 8081:8081 \
   -p 8082:8082 \
   -e DESCOPE_PROJECT_ID="your-project-id" \
@@ -198,27 +178,16 @@ docker run -d \
 
 ### Docker Compose
 
-```yaml
-version: '3.8'
-services:
-  neo4j-mcp:
-    image: arturrenzenbrink/neo4j-fastmcp-server:latest
-    ports:
-      - "8081:8081"  # MCP Server
-      - "8082:8082"  # OAuth Server
-    environment:
-      - DESCOPE_PROJECT_ID=${DESCOPE_PROJECT_ID}
-      - DESCOPE_MANAGEMENT_KEY=${DESCOPE_MANAGEMENT_KEY}
-      - NEO4J_URI=${NEO4J_URI}
-      - NEO4J_USERNAME=${NEO4J_USERNAME}
-      - NEO4J_PASSWORD=${NEO4J_PASSWORD}
-      - SESSION_SECRET=${SESSION_SECRET}
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8081/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+```bash
+# Use the included docker-compose.yml
+docker compose up -d
 ```
+
+## 📚 Documentation
+
+- **[Integration Guide](docs/INTEGRATION_GUIDE.md)** - Complete Descope setup and configuration
+- **[API Reference](docs/API_REFERENCE.md)** - Full API documentation with examples
+- **[Testing Guide](docs/TESTING_GUIDE.md)** - Comprehensive testing instructions
 
 ## 🏗️ Architecture
 
@@ -242,43 +211,16 @@ services:
 └─────────────────┘    └─────────────────┘    └─────────────────┘
 ```
 
-## 📚 Documentation
-
-- **[Integration Guide](docs/INTEGRATION_GUIDE.md)** - Detailed setup and configuration
-- **[API Reference](docs/API_REFERENCE.md)** - Complete API reference
-- **[Testing Guide](docs/TESTING_GUIDE.md)** - Comprehensive testing instructions
-
 ## 🎯 Use Cases
 
 ### Claude.ai Knowledge Graph
-
-```
-1. Add custom MCP integration in Claude settings
-2. Complete OAuth flow to authenticate
-3. Claude can now:
-   - Store conversation context in Neo4j
-   - Search previous interactions
-   - Build knowledge relationships
-   - Maintain persistent memory
-```
+Add custom MCP integration → Complete OAuth flow → Claude gains persistent memory
 
 ### Enterprise Knowledge Management
-
-```
-1. Deploy server with company OAuth (Google Workspace, Azure AD)
-2. Teams authenticate with existing credentials  
-3. Build and share knowledge graphs
-4. Fine-grained access control by department/role
-```
+Deploy with company OAuth → Teams authenticate with existing credentials → Build shared knowledge graphs
 
 ### AI Agent Memory
-
-```
-1. AI agents authenticate via API keys
-2. Store learned information persistently
-3. Search and retrieve relevant context
-4. Build knowledge over multiple interactions
-```
+Agents authenticate via API keys → Store learned information → Search and retrieve context across interactions
 
 ## 🤝 Contributing
 
@@ -294,8 +236,8 @@ MIT License - see LICENSE file for details.
 
 ## 🆘 Support
 
-- **Documentation**: Comprehensive guides and examples included
-- **Issues**: Report bugs via GitHub Issues
+- **Documentation**: Comprehensive guides in the [docs/](docs/) folder
+- **Issues**: Report bugs via [GitHub Issues](https://github.com/artur-nohup/neo4j-fastmcp-server/issues)
 - **Descope Support**: [Descope Documentation](https://docs.descope.com/)
 - **MCP Specification**: [Model Context Protocol](https://spec.modelcontextprotocol.io/)
 
