@@ -1,369 +1,306 @@
-# Neo4j FastMCP Server
+# Neo4j FastMCP Server with Descope Authentication
 
-A remote Model Context Protocol (MCP) server built with FastMCP TypeScript framework, providing Neo4j knowledge graph memory capabilities with OAuth 2.1 authentication.
+A production-ready remote Model Context Protocol (MCP) server with enterprise-grade authentication powered by Descope. Fully compatible with Claude.ai and other MCP clients.
 
 [![Docker Image](https://img.shields.io/docker/v/arturrenzenbrink/neo4j-fastmcp-server?label=Docker%20Hub)](https://hub.docker.com/r/arturrenzenbrink/neo4j-fastmcp-server)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-## Features
+## 🚀 Features
 
-- 🚀 **Remote MCP Server**: HTTP streaming support for remote access
-- 🔐 **OAuth 2.1 Authentication**: Secure token-based authentication with JWT
-- 🧠 **Neo4j Knowledge Graph**: Persistent memory storage in Neo4j
-- 📊 **Full-text Search**: Search across entity names, types, and observations
-- 🛡️ **Scope-based Authorization**: Fine-grained access control (read/write/admin)
-- 🐳 **Docker Support**: Complete containerization with Docker Compose
-- 🔄 **Session Management**: Per-client session handling
-- 📈 **Health Monitoring**: Built-in health checks and monitoring
+- **🔐 Enterprise Authentication**: OAuth 2.1 with PKCE + API key authentication via Descope
+- **🎯 Claude.ai Ready**: Full OAuth flow integration for Claude's custom integrations
+- **🧠 Neo4j Knowledge Graph**: Persistent memory storage with full-text search
+- **🛡️ Fine-grained Permissions**: MCP-specific scopes and role-based access control
+- **📊 Session Management**: Automatic token refresh and session validation
+- **🐳 Production Ready**: Docker support with health checks and monitoring
+- **⚡ FastMCP Framework**: Built on the latest FastMCP TypeScript framework
+- **🔄 Dual Authentication**: Seamlessly supports both OAuth and API key authentication
 
-## Quick Start
+## 🎯 Perfect for Claude.ai Integration
 
-### Prerequisites
+This server is specifically designed to work with Claude.ai's custom integrations feature:
 
-- Node.js 20+
-- Docker and Docker Compose
-- Access to a Neo4j instance
+1. **OAuth 2.1 Compliance**: Full PKCE support for secure authentication
+2. **Remote MCP Protocol**: HTTP streaming transport for cloud deployment
+3. **Scope-based Permissions**: Fine-grained access control
+4. **Session Management**: Automatic token handling and refresh
+5. **Production Security**: Enterprise-grade authentication via Descope
 
-### 1. Environment Setup
+## 🚀 Quick Start
 
-Copy the environment template and configure:
+### 1. Descope Setup (Required)
+
+1. Create account at [Descope Console](https://app.descope.com)
+2. Create a new project for your MCP server
+3. Configure OAuth providers (Google, GitHub, etc.)
+4. Copy your Project ID and Management Key
+
+### 2. Environment Configuration
 
 ```bash
+git clone https://github.com/artur-nohup/neo4j-fastmcp-server.git
+cd neo4j-fastmcp-server
 cp .env.example .env
 ```
 
 Edit `.env` with your configuration:
 
 ```env
-# Neo4j Configuration
+# Descope Configuration (REQUIRED)
+DESCOPE_PROJECT_ID=your-descope-project-id
+DESCOPE_MANAGEMENT_KEY=your-management-key
+
+# Neo4j Configuration (REQUIRED)
 NEO4J_URI=bolt://localhost:7687
 NEO4J_USERNAME=neo4j
 NEO4J_PASSWORD=your-password
-NEO4J_DATABASE=neo4j
 
-# OAuth Configuration
-JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
+# OAuth Configuration (REQUIRED for Claude.ai)
 OAUTH_CLIENT_ID=your-oauth-client-id
 OAUTH_CLIENT_SECRET=your-oauth-client-secret
-OAUTH_REDIRECT_URI=http://localhost:8080/auth/callback
+OAUTH_REDIRECT_URI=http://localhost:8081/oauth/callback
+
+# Session Security
+SESSION_SECRET=your-secure-session-secret
 ```
 
-### 2. Docker Deployment
-
-**Using the pre-built image:**
-
-```bash
-# Pull and run the image
-docker pull arturrenzenbrink/neo4j-fastmcp-server:latest
-
-docker run -d \
-  --name neo4j-mcp-server \
-  -p 8080:8080 \
-  -e NEO4J_URI="bolt://your-neo4j:7687" \
-  -e NEO4J_USERNAME="neo4j" \
-  -e NEO4J_PASSWORD="your-password" \
-  -e JWT_SECRET="your-jwt-secret" \
-  -e OAUTH_CLIENT_ID="your-client-id" \
-  -e OAUTH_CLIENT_SECRET="your-client-secret" \
-  arturrenzenbrink/neo4j-fastmcp-server:latest
-```
-
-**Using Docker Compose:**
-
-```bash
-# Build and start the services
-docker-compose up -d
-
-# View logs
-docker-compose logs -f neo4j-mcp-server
-
-# Stop services
-docker-compose down
-```
-
-### 3. Development Setup
+### 3. Installation & Testing
 
 ```bash
 # Install dependencies
 npm install
 
-# Build the project
-npm run build
-
 # Start development server
 npm run dev
 
-# Start production server
-npm start
+# The server starts on:
+# - MCP Server: http://localhost:8081/stream
+# - OAuth Server: http://localhost:8082
 ```
 
-## Authentication
+### 4. Claude.ai Integration
 
-### OAuth 2.1 Flow
+1. In Claude.ai, go to **Settings > Integrations**
+2. Click **Add Integration**
+3. Enter MCP Server URL: `http://localhost:8081/stream`
+4. Complete the OAuth flow when prompted
+5. Grant permissions to Claude
+6. Start using your Neo4j knowledge graph in Claude!
 
-1. **Authorization**: Client redirects to OAuth provider with appropriate scopes
-2. **Token Exchange**: Authorization code exchanged for access token
-3. **JWT Generation**: Server generates internal JWT with user info and scopes
-4. **API Access**: Client uses JWT Bearer token for MCP API calls
+## 🔐 Authentication Methods
 
-### Scopes
+### OAuth 2.1 Flow (for Claude.ai)
 
-- `read`: Access to read operations (search, find, read graph)
-- `write`: Access to write operations (create, update, delete)
-- `admin`: Administrative access (health checks, server management)
+Perfect for interactive clients like Claude.ai:
 
-### Example Client Authentication
-
-```typescript
-// Include JWT token in MCP client headers
-const transport = new StreamableHTTPClientTransport(
-  new URL('http://localhost:8080/stream'),
-  {
-    headers: {
-      'Authorization': 'Bearer your-jwt-token-here'
-    }
-  }
-);
+```
+1. Authorization Request → OAuth Provider Login
+2. Authorization Code → Token Exchange  
+3. Access Token → MCP API Access
+4. Refresh Token → Automatic Token Renewal
 ```
 
-## API Tools
+**Endpoints**:
+- Authorization: `http://localhost:8082/oauth/authorize`
+- Token Exchange: `http://localhost:8082/oauth/token`
+- User Info: `http://localhost:8082/oauth/userinfo`
 
-### Knowledge Graph Operations
+### API Key Authentication
 
-#### Create Entities
-```json
-{
-  "tool": "create_entities",
-  "arguments": {
-    "entities": [
-      {
-        "name": "Claude",
-        "type": "Person",
-        "observations": ["AI assistant", "Helpful", "Created by Anthropic"]
-      }
-    ]
-  }
-}
-```
-
-#### Create Relations
-```json
-{
-  "tool": "create_relations",
-  "arguments": {
-    "relations": [
-      {
-        "source": "Claude",
-        "target": "Anthropic",
-        "relationType": "CREATED_BY"
-      }
-    ]
-  }
-}
-```
-
-#### Search Nodes
-```json
-{
-  "tool": "search_nodes",
-  "arguments": {
-    "query": "AI assistant"
-  }
-}
-```
-
-#### Read Entire Graph
-```json
-{
-  "tool": "read_graph",
-  "arguments": {}
-}
-```
-
-### Administrative Operations
-
-#### Health Check (Admin Only)
-```json
-{
-  "tool": "health_check",
-  "arguments": {}
-}
-```
-
-## Testing
-
-For comprehensive testing instructions, see the included guides:
-
-- `COMPLETE_TESTING_GUIDE.md` - Complete testing options
-- `DOCKER_MCP_INSPECTOR_GUIDE.md` - MCP Inspector testing
-
-### Quick Test
+Ideal for programmatic access and automation:
 
 ```bash
-# Test with no-auth server (easiest)
-npx tsx src/test-direct.ts
+# Create API key (admin access required)
+curl -X POST http://localhost:8082/admin/api-keys \
+  -H "Authorization: Bearer <oauth-token>" \
+  -d '{"name":"my-app","permissions":["mcp:read","mcp:write"]}'
 
-# In another terminal
-npx @modelcontextprotocol/inspector http://localhost:8081/stream
+# Use API key
+curl -X POST http://localhost:8081/stream \
+  -H "X-API-Key: <your-api-key>" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
 ```
 
-## Architecture
+## 🎛️ Available Tools & Scopes
+
+### MCP Tools (10 total)
+
+1. **create_entities** - Create knowledge graph entities (requires `mcp:write`)
+2. **create_relations** - Create relationships between entities (requires `mcp:write`)
+3. **add_observations** - Add observations to entities (requires `mcp:write`)
+4. **delete_entities** - Remove entities and relations (requires `mcp:write`)
+5. **delete_observations** - Remove specific observations (requires `mcp:write`)
+6. **delete_relations** - Remove relationships (requires `mcp:write`)
+7. **read_graph** - Read entire knowledge graph (requires `mcp:read`)
+8. **search_nodes** - Full-text search across the graph (requires `mcp:read`)
+9. **find_nodes** - Find specific entities by name (requires `mcp:read`)
+10. **health_check** - Server and Neo4j health status (requires `mcp:admin`)
+
+### Permission Scopes
+
+- `mcp:read` - Read operations and graph queries
+- `mcp:write` - Create, update, and delete operations  
+- `mcp:admin` - Administrative operations and health checks
+- `mcp:tools:list` - List available tools
+- `mcp:tools:call` - Execute MCP tools
+
+## 🧪 Testing & Development
+
+### MCP Inspector Testing
+
+```bash
+# Start test server
+npm run test
+
+# In another terminal
+npx @modelcontextprotocol/inspector
+
+# Configure connection:
+# URL: http://localhost:8081/stream
+# Auth: Use OAuth flow or API key
+```
+
+### cURL Testing
+
+```bash
+# OAuth flow test
+curl -X POST http://localhost:8081/stream \
+  -H "Authorization: Bearer <oauth-token>" \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
+
+# API key test  
+curl -X POST http://localhost:8081/stream \
+  -H "X-API-Key: <api-key>" \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
+```
+
+## 🐳 Docker Deployment
+
+### Using Pre-built Image
+
+```bash
+docker pull arturrenzenbrink/neo4j-fastmcp-server:latest
+
+docker run -d \
+  --name neo4j-mcp-descope \
+  -p 8081:8081 \
+  -p 8082:8082 \
+  -e DESCOPE_PROJECT_ID="your-project-id" \
+  -e DESCOPE_MANAGEMENT_KEY="your-management-key" \
+  -e NEO4J_URI="bolt://your-neo4j:7687" \
+  -e NEO4J_USERNAME="neo4j" \
+  -e NEO4J_PASSWORD="your-password" \
+  -e SESSION_SECRET="your-session-secret" \
+  arturrenzenbrink/neo4j-fastmcp-server:latest
+```
+
+### Docker Compose
+
+```yaml
+version: '3.8'
+services:
+  neo4j-mcp:
+    image: arturrenzenbrink/neo4j-fastmcp-server:latest
+    ports:
+      - "8081:8081"  # MCP Server
+      - "8082:8082"  # OAuth Server
+    environment:
+      - DESCOPE_PROJECT_ID=${DESCOPE_PROJECT_ID}
+      - DESCOPE_MANAGEMENT_KEY=${DESCOPE_MANAGEMENT_KEY}
+      - NEO4J_URI=${NEO4J_URI}
+      - NEO4J_USERNAME=${NEO4J_USERNAME}
+      - NEO4J_PASSWORD=${NEO4J_PASSWORD}
+      - SESSION_SECRET=${SESSION_SECRET}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+```
+
+## 🏗️ Architecture
 
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   MCP Client    │───▶│  FastMCP Server │───▶│   Neo4j DB     │
-│                 │    │                 │    │                 │
-│ - Claude        │    │ - OAuth Auth    │    │ - Knowledge     │
-│ - VS Code       │    │ - Session Mgmt  │    │   Graph         │
-│ - Custom Apps   │    │ - API Tools     │    │ - Full-text     │
-└─────────────────┘    └─────────────────┘    │   Search        │
-                                              └─────────────────┘
-           │                        │
-           ▼                        ▼
-┌─────────────────┐    ┌─────────────────┐
-│ OAuth Provider  │    │ Nginx Proxy     │
-│                 │    │                 │
-│ - Token Issue   │    │ - Load Balance  │
-│ - User Info     │    │ - Rate Limiting │
-│ - Scope Mgmt    │    │ - SSL Term      │
-└─────────────────┘    └─────────────────┘
+│   Claude.ai     │───▶│  OAuth Server   │───▶│    Descope      │
+│                 │    │  (Port 8082)    │    │   Platform      │
+│ - Custom MCP    │    │                 │    │                 │
+│ - OAuth Client  │    │ - Authorization │    │ - User Identity │
+│ - Token Mgmt    │    │ - Token Exchange│    │ - OAuth Providers│
+└─────────────────┘    │ - PKCE Support  │    │ - Session Mgmt  │
+           │            └─────────────────┘    └─────────────────┘
+           ▼
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   MCP Server    │───▶│   FastMCP Auth  │───▶│   Neo4j DB     │
+│  (Port 8081)    │    │                 │    │                 │
+│                 │    │ - Session Val   │    │ - Knowledge     │
+│ - Stream API    │    │ - Scope Check   │    │   Graph         │
+│ - Tool Execution│    │ - Permissions   │    │ - Full-text     │
+│ - Health Checks │    │ - Audit Logs    │    │   Search        │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
 ```
 
-## Configuration
+## 📚 Documentation
 
-### Environment Variables
+- **[Integration Guide](docs/INTEGRATION_GUIDE.md)** - Detailed setup and configuration
+- **[API Reference](docs/API_REFERENCE.md)** - Complete API reference
+- **[Testing Guide](docs/TESTING_GUIDE.md)** - Comprehensive testing instructions
 
-| Variable | Description | Required | Default |
-|----------|-------------|----------|---------|
-| `NEO4J_URI` | Neo4j connection URI | ✅ | - |
-| `NEO4J_USERNAME` | Neo4j username | ✅ | - |
-| `NEO4J_PASSWORD` | Neo4j password | ✅ | - |
-| `NEO4J_DATABASE` | Neo4j database name | ❌ | `neo4j` |
-| `JWT_SECRET` | JWT signing secret | ✅ | - |
-| `OAUTH_CLIENT_ID` | OAuth client ID | ✅ | - |
-| `OAUTH_CLIENT_SECRET` | OAuth client secret | ✅ | - |
-| `OAUTH_REDIRECT_URI` | OAuth redirect URI | ✅ | - |
-| `SERVER_PORT` | Server port | ❌ | `8080` |
-| `MCP_SERVER_NAME` | MCP server name | ❌ | `neo4j-memory-mcp` |
+## 🎯 Use Cases
 
-## Security
+### Claude.ai Knowledge Graph
 
-### Best Practices
-
-1. **JWT Secret**: Use a strong, random JWT secret (256+ bits)
-2. **OAuth Configuration**: Ensure OAuth provider is properly configured
-3. **HTTPS**: Use HTTPS in production (configure nginx SSL)
-4. **Rate Limiting**: Nginx includes rate limiting configuration
-5. **Scope Validation**: All operations check required scopes
-6. **Input Validation**: All inputs validated with Zod schemas
-
-### Security Headers
-
-The nginx proxy adds security headers:
-- `X-Content-Type-Options: nosniff`
-- `X-Frame-Options: DENY`
-- `X-XSS-Protection: 1; mode=block`
-- `Referrer-Policy: strict-origin-when-cross-origin`
-
-## Monitoring
-
-### Health Checks
-
-- **Docker Health Check**: Built-in container health monitoring
-- **API Health Endpoint**: `/health` endpoint for external monitoring
-- **Admin Tool**: `health_check` tool for detailed status
-
-### Logs
-
-```bash
-# View server logs
-docker-compose logs -f neo4j-mcp-server
-
-# View nginx logs
-docker-compose logs -f nginx
+```
+1. Add custom MCP integration in Claude settings
+2. Complete OAuth flow to authenticate
+3. Claude can now:
+   - Store conversation context in Neo4j
+   - Search previous interactions
+   - Build knowledge relationships
+   - Maintain persistent memory
 ```
 
-## Development
+### Enterprise Knowledge Management
 
-### Building
-
-```bash
-npm run build
+```
+1. Deploy server with company OAuth (Google Workspace, Azure AD)
+2. Teams authenticate with existing credentials  
+3. Build and share knowledge graphs
+4. Fine-grained access control by department/role
 ```
 
-### Testing
+### AI Agent Memory
 
-```bash
-npm test
+```
+1. AI agents authenticate via API keys
+2. Store learned information persistently
+3. Search and retrieve relevant context
+4. Build knowledge over multiple interactions
 ```
 
-### Linting
+## 🤝 Contributing
 
-```bash
-npm run lint
-```
+1. Fork the repository
+2. Create a feature branch
+3. Implement your changes
+4. Add tests and documentation
+5. Submit a pull request
 
-## Production Deployment
-
-### 1. SSL Configuration
-
-Uncomment and configure HTTPS section in `nginx.conf`:
-
-```nginx
-server {
-    listen 443 ssl http2;
-    server_name your-domain.com;
-    
-    ssl_certificate /etc/nginx/ssl/cert.pem;
-    ssl_certificate_key /etc/nginx/ssl/key.pem;
-    # ... additional SSL config
-}
-```
-
-### 2. Environment Hardening
-
-- Change all default secrets and passwords
-- Configure proper OAuth provider endpoints
-- Set up monitoring and alerting
-- Configure backup strategies for Neo4j
-
-### 3. Scaling
-
-The server can be scaled horizontally using Docker Swarm or Kubernetes. Each instance maintains its own session state.
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Neo4j Connection Failed**
-   - Verify Neo4j URI and credentials
-   - Check network connectivity
-   - Ensure Neo4j is running and accessible
-
-2. **Authentication Errors**
-   - Verify JWT secret configuration
-   - Check OAuth provider configuration
-   - Validate token format and expiration
-
-3. **Port Conflicts**
-   - Change `SERVER_PORT` if 8080 is in use
-   - Update docker-compose port mappings
-
-### Debug Mode
-
-Enable debug logging:
-
-```bash
-NODE_ENV=development npm run dev
-```
-
-## License
+## 📄 License
 
 MIT License - see LICENSE file for details.
 
-## Support
+## 🆘 Support
 
-For issues and questions:
-- Check the troubleshooting section
-- Review logs for error details
-- Ensure all prerequisites are met
+- **Documentation**: Comprehensive guides and examples included
+- **Issues**: Report bugs via GitHub Issues
+- **Descope Support**: [Descope Documentation](https://docs.descope.com/)
+- **MCP Specification**: [Model Context Protocol](https://spec.modelcontextprotocol.io/)
+
+---
+
+**Ready to enhance Claude.ai with your own knowledge graph?** 🚀
+
+The Neo4j FastMCP Server with Descope provides enterprise-grade authentication that works seamlessly with Claude.ai while maintaining the flexibility to support any MCP client. Perfect for building persistent AI memory, knowledge management systems, and contextual AI applications.
